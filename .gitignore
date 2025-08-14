@@ -1,0 +1,6 @@
+export const GITIGNORE = `node_modules
+.next
+out
+.DS_Store
+.env
+`;
