@@ -1,0 +1,1 @@
+# -Equivalent-Qualification-Checklist-TH
