@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { PencilIcon, CopyIcon, TrashIcon } from './Icons';
+import ChecklistSection from './ChecklistSection';
+import ImportModal from './ImportModal';
+import AddApplicantModal from './AddApplicantModal';
 
 // === Data Model (base template) ===
 const DEFAULT_DATA = [
@@ -428,9 +432,9 @@ function CaseSwitcher({ cases, activeId, onSwitch, onAdd, onRename, onDuplicate,
                   )}
                   {!isEditing && (
                     <div className="flex items-center gap-1">
-                      <IconButton title="เปลี่ยนชื่อ" onClick={() => { setEditingId(c.id); setDraft(label); }} variant={active ? 'ghost-white' : 'ghost'}>{PencilIcon()}</IconButton>
-                      <IconButton title="ทำสำเนา" onClick={() => onDuplicate(c.id)} variant={active ? 'ghost-white' : 'ghost'}>{CopyIcon()}</IconButton>
-                      <IconButton title={onlyOne ? 'เหลือได้อย่างน้อย 1 รายชื่อ' : `ลบ “${label}”`} onClick={() => !onlyOne && onDelete(c.id, label)} variant={active ? 'ghost-white' : 'ghost'} disabled={onlyOne}>{TrashIcon()}</IconButton>
+                      <IconButton title="เปลี่ยนชื่อ" onClick={() => { setEditingId(c.id); setDraft(label); }} variant={active ? 'ghost-white' : 'ghost'}><PencilIcon /></IconButton>
+                      <IconButton title="ทำสำเนา" onClick={() => onDuplicate(c.id)} variant={active ? 'ghost-white' : 'ghost'}><CopyIcon /></IconButton>
+                      <IconButton title={onlyOne ? 'เหลือได้อย่างน้อย 1 รายชื่อ' : `ลบ “${label}”`} onClick={() => !onlyOne && onDelete(c.id, label)} variant={active ? 'ghost-white' : 'ghost'} disabled={onlyOne}><TrashIcon /></IconButton>
                     </div>
                   )}
                 </div>
@@ -454,9 +458,6 @@ function IconButton({ children, onClick, title, variant = 'ghost', disabled = fa
     </button>
   );
 }
-function PencilIcon() { return (<svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden><path d="M13.5 2.5l4 4L7 17H3v-4l10.5-10.5z" stroke="currentColor" strokeWidth="1.5" fill="none"/></svg>); }
-function CopyIcon() { return (<svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden><rect x="7" y="3" width="10" height="14" rx="2" stroke="currentColor" strokeWidth="1.5"/><rect x="3" y="7" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.5"/></svg>); }
-function TrashIcon() { return (<svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden><path d="M3 6h14M8 6v-2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2m-7 0l1 11a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>); }
 
 function labelOf(c) { return c.label || c.applicant?.fullName || ''; }
 
@@ -569,148 +570,17 @@ function SectionList({ sections, onToggleOpen, onToggleItem, onUpdateItem, onRem
   return (
     <div className="grid gap-4 md:gap-5">
       {sections.map(section => (
-        <SectionCard key={section.id} section={section} onToggleOpen={() => onToggleOpen(section.id)} onToggleItem={onToggleItem} onUpdateItem={onUpdateItem} onRemoveItem={onRemoveItem} onAddItem={onAddItem} />
+        <ChecklistSection
+          key={section.id}
+          section={section}
+          onToggleOpen={() => onToggleOpen(section.id)}
+          onToggleItem={onToggleItem}
+          onUpdateItem={onUpdateItem}
+          onRemoveItem={onRemoveItem}
+          onAddItem={onAddItem}
+        />
       ))}
     </div>
   );
 }
 
-function SectionCard({ section, onToggleOpen, onToggleItem, onUpdateItem, onRemoveItem, onAddItem }) {
-  const total = section.items.length;
-  const done = section.items.filter(i => i.status === 'done').length;
-  const [draftLabel, setDraftLabel] = useState('');
-  const [draftReq, setDraftReq] = useState('optional');
-  return (
-    <section className="card rounded-2xl border border-neutral-200 bg-white shadow-sm">
-      <button className="w-full text-left px-5 py-4 flex items-start gap-3 hover:bg-neutral-50 rounded-t-2xl" onClick={onToggleOpen} aria-expanded={section.open} aria-controls={`${section.id}-panel`}>
-        <div className="mt-1"><ChevronIcon open={section.open} /></div>
-        <div className="flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-lg font-semibold">{section.title}</h3>
-            <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">{done}/{total}</span>
-          </div>
-          <p className="mt-1 text-sm text-neutral-600">{section.description}</p>
-        </div>
-      </button>
-      {section.open && (
-        <div id={`${section.id}-panel`} className="px-5 pb-5">
-          {section.items.length === 0 ? <p className="text-sm text-neutral-500">ไม่มีรายการตามตัวกรอง</p> : (
-            <ul className="mt-2 grid gap-2">
-              {section.items.map(item => (
-                <ChecklistItem key={item.id} sectionId={section.id} item={item} onToggle={() => onToggleItem(section.id, item.id)} onChange={(patch) => onUpdateItem(section.id, item.id, patch)} onRemove={() => onRemoveItem(section.id, item.id)} />
-              ))}
-            </ul>
-          )}
-          <div className="mt-3 flex flex-col gap-2 rounded-xl border border-dashed border-neutral-300 p-3">
-            <span className="text-sm font-medium text-neutral-800">เพิ่มรายการใหม่ในหมวดนี้</span>
-            <div className="flex flex-col gap-2 md:flex-row">
-              <input type="text" value={draftLabel} onChange={(e) => setDraftLabel(e.target.value)} placeholder="กรอกชื่อรายการเอกสาร…" className="flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-              <select value={draftReq} onChange={(e) => setDraftReq(e.target.value)} className="rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <option value="required">จำเป็น</option>
-                <option value="optional">ขึ้นกับเงื่อนไข</option>
-              </select>
-              <button className="btn" onClick={() => { onAddItem(section.id, draftLabel, draftReq); setDraftLabel(''); setDraftReq('optional'); }}>เพิ่มรายการ</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function ChecklistItem({ sectionId, item, onToggle, onChange, onRemove }) {
-  const itemId = `${sectionId}-${item.id}`;
-  return (
-    <li className={cls('rounded-xl border p-3 md:p-4', item.status === 'done' ? 'border-emerald-300 bg-emerald-50' : 'border-neutral-200 bg-white')}>
-      <div className="flex flex-col gap-2 md:flex-row md:items-start md:gap-4">
-        <div className="flex items-start gap-3 md:w-1/2">
-          <input id={itemId} type="checkbox" checked={item.status === 'done'} onChange={onToggle} className="mt-1 h-5 w-5 rounded border-neutral-300 text-indigo-600 focus:ring-indigo-500" aria-describedby={`${itemId}-desc`} />
-          <label htmlFor={itemId} className="flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={cls('font-medium', item.status === 'done' && 'line-through')}>{item.label}</span>
-              <span className={cls('rounded-full px-2 py-0.5 text-[11px]', item.req === 'required' ? 'bg-rose-100 text-rose-800' : 'bg-neutral-100 text-neutral-700')}>{item.req === 'required' ? 'จำเป็น' : 'ขึ้นกับเงื่อนไข'}</span>
-              {item.custom && (<span className="rounded-full bg-indigo-100 text-indigo-800 px-2 py-0.5 text-[11px]">custom</span>)}
-            </div>
-            <p id={`${itemId}-desc`} className="sr-only">{item.req === 'required' ? 'จำเป็น' : 'ขึ้นกับเงื่อนไข'}</p>
-          </label>
-        </div>
-        <div className="md:w-1/2 grid gap-2">
-          <div className="flex gap-2">
-            <input type="text" value={item.file} onChange={(e) => onChange({ file: e.target.value })} placeholder="ชื่อไฟล์/ลิงก์เอกสาร (เช่น transcript_en.pdf หรือ Google Drive URL)" className="flex-1 rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="ชื่อไฟล์หรือที่อยู่ลิงก์" />
-            <button onClick={() => navigator.clipboard?.writeText(item.file || '').then(() => {})} className="btn-secondary" title="คัดลอกชื่อไฟล์/ลิงก์">คัดลอก</button>
-            <button onClick={onRemove} className="btn-danger" title="ลบรายการนี้">ลบ</button>
-          </div>
-          <textarea value={item.note} onChange={(e) => onChange({ note: e.target.value })} placeholder="บันทึกโน้ต เช่น แปลอังกฤษเรียบร้อย ตรารับรองครบ" className="min-h-[42px] w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="บันทึกโน้ต" />
-        </div>
-      </div>
-    </li>
-  );
-}
-
-function ImportModal({ onClose, onPickFile }) {
-  return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-20 grid place-items-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h4 className="text-lg font-semibold">นำเข้าสถานะจากไฟล์ JSON</h4>
-        <p className="mt-1 text-sm text-neutral-600">รองรับรูปแบบหลายรายชื่อ (v3) หรือไฟล์เดิมรายชื่อเดียว (v2)</p>
-        <div className="mt-4 flex gap-2">
-          <button onClick={onPickFile} className="btn">เลือกไฟล์</button>
-          <button onClick={onClose} className="btn-secondary">ยกเลิก</button>
-        </div>
-        <details className="mt-4">
-          <summary className="cursor-pointer text-sm text-neutral-700">ตัวอย่างไฟล์ v3</summary>
-          <pre className="mt-2 overflow-auto rounded-lg bg-neutral-50 p-3 text-xs text-neutral-700">{`{
-  "version": 3,
-  "activeId": "abc123",
-  "cases": [
-    { "id": "abc123", "label": "Pop Mee", "applicant": {"fullName": "Pop Mee", "degree": "M.Eng.", "institution": "...", "country": "Thailand"}, "profile": {"nationality": "Thai", "phd": false}, "sections": [ /* ... */ ] }
-  ]
-}`}</pre>
-        </details>
-      </div>
-    </div>
-  );
-}
-
-function AddApplicantModal({ onClose, onCreate }) {
-  const [fullName, setFullName] = useState('');
-  const [degree, setDegree] = useState('');
-  const [institution, setInstitution] = useState('');
-  const [country, setCountry] = useState('');
-  const [nationality, setNationality] = useState('Thai');
-  const [phd, setPhd] = useState(false);
-  return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-20 grid place-items-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h4 className="text-lg font-semibold">เพิ่มรายชื่อใหม่</h4>
-        <p className="mt-1 text-sm text-neutral-600">สร้างแบบฟอร์มใหม่สำหรับรายชื่อนี้</p>
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          <TextField label="ชื่อ-นามสกุล" value={fullName} onChange={setFullName} placeholder="เช่น Pop Mee" />
-          <TextField label="คุณวุฒิ" value={degree} onChange={setDegree} placeholder="เช่น M.Eng." />
-          <TextField label="สถาบัน" value={institution} onChange={setInstitution} placeholder="ชื่อมหาวิทยาลัย/สถาบัน" />
-          <TextField label="ประเทศ" value={country} onChange={setCountry} placeholder="ประเทศที่ศึกษา" />
-        </div>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <fieldset className="flex items-center gap-3">
-            <legend className="sr-only">สัญชาติ</legend>
-            <label className="inline-flex items-center gap-2 text-sm"><input type="radio" name="nat" checked={nationality === 'Thai'} onChange={() => setNationality('Thai')} /> Thai</label>
-            <label className="inline-flex items-center gap-2 text-sm"><input type="radio" name="nat" checked={nationality === 'Non-Thai'} onChange={() => setNationality('Non-Thai')} /> Non-Thai</label>
-          </fieldset>
-          <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={phd} onChange={(e) => setPhd(e.target.checked)} /> PhD</label>
-        </div>
-        <div className="mt-4 flex gap-2 justify-end">
-          <button className="btn-secondary" onClick={onClose}>ยกเลิก</button>
-          <button className="btn" onClick={() => onCreate({ fullName, degree, institution, country, nationality, phd })}>สร้างแบบฟอร์ม</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ChevronIcon({ open }) {
-  return (
-    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className={cls('transition-transform', open ? 'rotate-90' : 'rotate-0')} aria-hidden>
-      <path d="M7 5l6 5-6 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
