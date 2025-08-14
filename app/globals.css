@@ -1,4 +1,4 @@
-export const GLOBALS_CSS = `@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -14,4 +14,3 @@ export const GLOBALS_CSS = `@tailwind base;
   main { max-width: 800px; }
   .card { box-shadow: none !important; border: 1px solid #ddd; }
 }
-`;

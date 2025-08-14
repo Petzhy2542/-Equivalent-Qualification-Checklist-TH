@@ -1,6 +1,8 @@
-export const APP_LAYOUT = `export const metadata = {
-  title: 'Document Checklist',
-  description: 'Thai Document Checklist – Next.js + Tailwind',
+import "./globals.css";
+
+export const metadata = {
+  title: "Document Checklist",
+  description: "Thai Document Checklist – Next.js + Tailwind",
 };
 
 export default function RootLayout({ children }) {
@@ -12,4 +14,3 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
-`;
