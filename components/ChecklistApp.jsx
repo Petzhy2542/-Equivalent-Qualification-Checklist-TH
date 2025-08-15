@@ -100,7 +100,13 @@ const makeSections = () => DEFAULT_DATA.map(sec => ({
   items: sec.items.map(it => ({ ...it, status: 'todo', file: '', note: '', custom: false }))
 }));
 
-const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+const uid = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  // Fallback for older browsers
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+};
 const deepClone = (obj) => { try { return structuredClone(obj); } catch { return JSON.parse(JSON.stringify(obj)); } };
 
 function makeCase(label = 'ผู้ยื่น 1', applicant = {}, profile = {}) {
