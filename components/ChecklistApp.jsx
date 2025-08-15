@@ -2,9 +2,12 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PencilIcon, CopyIcon, TrashIcon } from './Icons';
-import ChecklistSection from './ChecklistSection';
 import ImportModal from './ImportModal';
 import AddApplicantModal from './AddApplicantModal';
+import StatBar from './StatBar';
+import ControlsBar from './ControlsBar';
+import CaseInfo from './CaseInfo';
+import SectionList from './SectionList';
 
 // === Data Model (base template) ===
 const DEFAULT_DATA = [
@@ -364,7 +367,7 @@ export default function ChecklistApp() {
           onDuplicate={duplicateCase}
           onDelete={(id, label) => removeCase(id, label)}
         />
-        <ApplicantCard
+        <CaseInfo
           applicant={current.applicant}
           setApplicant={(patch) => updateCurrent(c => ({ ...c, applicant: { ...c.applicant, ...patch } }))}
           profile={current.profile}
@@ -480,126 +483,4 @@ function IconButton({ children, onClick, title, variant = 'ghost', disabled = fa
 
 function labelOf(c) { return c.label || c.applicant?.fullName || ''; }
 
-function ApplicantCard({ applicant, setApplicant, profile, setProfile, onSave, onDelete }) {
-  return (
-    <section className="mt-4 mb-4">
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4 md:p-5 shadow-sm">
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <TextField label="ชื่อ-นามสกุล (Full name)" value={applicant.fullName} onChange={(v) => setApplicant({ fullName: v })} placeholder="เช่น Pop Mee" />
-            <TextField label="คุณวุฒิ (Degree)" value={applicant.degree} onChange={(v) => setApplicant({ degree: v })} placeholder="เช่น M.Eng., B.Sc., Ph.D." />
-            <TextField label="สถาบัน (Institution)" value={applicant.institution} onChange={(v) => setApplicant({ institution: v })} placeholder="ชื่อมหาวิทยาลัย/สถาบัน" />
-            <TextField label="ประเทศ (Country)" value={applicant.country} onChange={(v) => setApplicant({ country: v })} placeholder="ประเทศที่ศึกษา" />
-          </div>
-          <div className="grid gap-3 md:grid-cols-2 md:items-end">
-            <div className="grid gap-2">
-              <span className="text-sm font-medium">โปรไฟล์ผู้ยื่น (Applicant Profile)</span>
-              <div className="flex flex-wrap gap-2">
-                <SegmentedButton active={profile.nationality === 'Thai' && !profile.phd} onClick={() => setProfile({ nationality: 'Thai', phd: false })}>Thai</SegmentedButton>
-                <SegmentedButton active={profile.nationality === 'Non-Thai' && !profile.phd} onClick={() => setProfile({ nationality: 'Non-Thai', phd: false })}>Non-Thai</SegmentedButton>
-                <SegmentedButton active={!!profile.phd} onClick={() => setProfile({ phd: true })}>PhD</SegmentedButton>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <fieldset className="flex items-center gap-3">
-                  <legend className="sr-only">สัญชาติ</legend>
-                  <label className="inline-flex items-center gap-2 text-sm"><input type="radio" name="nationality" checked={profile.nationality === 'Thai'} onChange={() => setProfile({ nationality: 'Thai' })} /> Thai</label>
-                  <label className="inline-flex items-center gap-2 text-sm"><input type="radio" name="nationality" checked={profile.nationality === 'Non-Thai'} onChange={() => setProfile({ nationality: 'Non-Thai' })} /> Non-Thai</label>
-                </fieldset>
-                <label className="inline-flex items-center gap-2 text-sm"><input type="checkbox" checked={!!profile.phd} onChange={(e) => setProfile({ phd: e.target.checked })} /> มีเอกสารสำหรับ PhD (แสดงหมวด PhD)</label>
-              </div>
-            </div>
-            <div className="no-print flex gap-2 md:justify-end">
-              <button className="btn" onClick={onSave} title="บันทึกข้อมูลผู้ยื่นและโปรไฟล์ (autosave ทำงานอยู่แล้ว)">บันทึกข้อมูล</button>
-              <button className="btn-danger" onClick={onDelete} title="ลบรายชื่อนี้">ลบรายชื่อนี้</button>
-            </div>
-          </div>
-          <p className="text-xs text-neutral-500">* ระบบบันทึกอัตโนมัติลงอุปกรณ์ของคุณ (localStorage) และมีปุ่มบันทึกเพื่อยืนยันอีกครั้ง</p>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function TextField({ label, value, onChange, placeholder }) {
-  const id = React.useId();
-  return (
-    <label htmlFor={id} className="grid gap-1 text-sm">
-      <span className="text-neutral-700">{label}</span>
-      <input id={id} type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-        className="rounded-xl border border-neutral-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-    </label>
-  );
-}
-
-function SegmentedButton({ active, onClick, children }) {
-  return (
-    <button onClick={onClick} className={cls('rounded-full px-3 py-1 text-sm border', active ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-neutral-800 border-neutral-300 hover:bg-neutral-50')}>{children}</button>
-  );
-}
-
-function StatBar({ done, total, progress }) {
-  return (
-    <section className="mb-4">
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4 md:p-5 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-          <div>
-            <p className="text-sm text-neutral-600">ความคืบหน้า (Progress)</p>
-            <h2 className="text-2xl font-bold">{progress}%</h2>
-            <p className="text-xs text-neutral-500">ทำแล้ว {done} จาก {total} รายการ</p>
-          </div>
-          <div className="w-full md:w-2/3" aria-hidden>
-            <div className="h-3 w-full overflow-hidden rounded-full bg-neutral-100">
-              <div className="h-full bg-indigo-600 transition-all" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ControlsBar({ query, setQuery, filter, setFilter, onExpandAll, onCollapseAll, onExport, onImport, onPrint, onReset }) {
-  return (
-    <div className="no-print mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-      <div className="flex-1">
-        <label htmlFor="searchbox" className="sr-only">ค้นหารายการ</label>
-        <input id="searchbox" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="ค้นหาเอกสาร เช่น transcript, visa ..."
-          className="w-full rounded-xl border border-neutral-300 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="ค้นหารายการ" />
-      </div>
-      <div className="flex flex-wrap gap-2">
-        <select value={filter} onChange={(e) => setFilter(e.target.value)} className="rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="ตัวกรองรายการ">
-          <option value="all">ทั้งหมด</option>
-          <option value="required">เฉพาะที่จำเป็น</option>
-          <option value="optional">เฉพาะที่ขึ้นกับเงื่อนไข</option>
-          <option value="todo">ยังไม่ทำ</option>
-          <option value="done">ทำแล้ว</option>
-        </select>
-        <button onClick={onExpandAll} className="btn-secondary">ขยายทั้งหมด</button>
-        <button onClick={onCollapseAll} className="btn-secondary">ยุบทั้งหมด</button>
-        <button onClick={onExport} className="btn">Export JSON</button>
-        <button onClick={onImport} className="btn">Import JSON</button>
-        <button onClick={onPrint} className="btn-secondary">พิมพ์</button>
-        <button onClick={onReset} className="btn-danger">รีเซ็ต (รายชื่อนี้)</button>
-      </div>
-    </div>
-  );
-}
-
-function SectionList({ sections, onToggleOpen, onToggleItem, onUpdateItem, onRemoveItem, onAddItem }) {
-  return (
-    <div className="grid gap-4 md:gap-5">
-      {sections.map(section => (
-        <ChecklistSection
-          key={section.id}
-          section={section}
-          onToggleOpen={() => onToggleOpen(section.id)}
-          onToggleItem={onToggleItem}
-          onUpdateItem={onUpdateItem}
-          onRemoveItem={onRemoveItem}
-          onAddItem={onAddItem}
-        />
-      ))}
-    </div>
-  );
-}
 
