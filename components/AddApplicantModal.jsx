@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useId } from 'react';
+import useFocusTrap from './useFocusTrap';
 
 function TextField({ label, value, onChange, placeholder }) {
   return (
@@ -24,11 +25,22 @@ export default function AddApplicantModal({ onClose, onCreate }) {
   const [country, setCountry] = useState('');
   const [nationality, setNationality] = useState('Thai');
   const [phd, setPhd] = useState(false);
+  const dialogRef = useRef(null);
+  const titleId = useId();
+  const descId = useId();
+  useFocusTrap(dialogRef, onClose);
   return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-20 grid place-items-center bg-black/40 p-4" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl" onClick={e => e.stopPropagation()}>
-        <h4 className="text-lg font-semibold">เพิ่มรายชื่อใหม่</h4>
-        <p className="mt-1 text-sm text-neutral-600">สร้างแบบฟอร์มใหม่สำหรับรายชื่อนี้</p>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
+      className="fixed inset-0 z-20 grid place-items-center bg-black/40 p-4"
+      onClick={onClose}
+    >
+      <div ref={dialogRef} className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl" onClick={e => e.stopPropagation()}>
+        <h4 id={titleId} className="text-lg font-semibold">เพิ่มรายชื่อใหม่</h4>
+        <p id={descId} className="mt-1 text-sm text-neutral-600">สร้างแบบฟอร์มใหม่สำหรับรายชื่อนี้</p>
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
           <TextField label="ชื่อ-นามสกุล" value={fullName} onChange={setFullName} placeholder="เช่น Pop Mee" />
           <TextField label="คุณวุฒิ" value={degree} onChange={setDegree} placeholder="เช่น M.Eng." />
