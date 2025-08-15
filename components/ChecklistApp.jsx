@@ -92,6 +92,7 @@ const DEFAULT_DATA = [
 const cls = (...t) => t.filter(Boolean).join(' ');
 const casesKey = 'doc-cases-v1';
 const activeKey = 'doc-activeCase-v1';
+const themeKey = 'doc-theme';
 const legacyKeys = { sections: 'doc-checklist-v2', profile: 'doc-profile-v1', applicant: 'doc-applicant-v1' };
 
 const makeSections = () => DEFAULT_DATA.map(sec => ({
@@ -203,6 +204,15 @@ function isItemApplicable(sectionId, itemId, profile) {
 export default function ChecklistApp() {
   const [cases, setCases] = useLocalStorageState(casesKey, INITIAL_CASES);
   const [activeId, setActiveId] = useLocalStorageState(activeKey, INITIAL_CASES[0]?.id || '');
+  const [theme, setTheme] = useLocalStorageState(themeKey, 'light');
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
 
   const current = useMemo(() => cases.find(c => c.id === activeId) || cases[0], [cases, activeId]);
 
@@ -343,7 +353,7 @@ export default function ChecklistApp() {
   if (!current) return null;
   return (
     <div>
-      <Header />
+      <Header theme={theme} toggleTheme={toggleTheme} />
       <main className="mx-auto max-w-5xl px-4 pb-24">
         <CaseSwitcher
           cases={cases}
@@ -393,17 +403,20 @@ export default function ChecklistApp() {
   );
 }
 
-function Header() {
+function Header({ theme, toggleTheme }) {
   return (
-    <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-neutral-200">
+    <header className="sticky top-0 z-10 bg-white/80 backdrop-blur border-b border-neutral-200 dark:bg-neutral-900/80 dark:border-neutral-700">
       <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between">
         <h1 className="text-xl md:text-2xl font-semibold tracking-tight">รายการเอกสารเทียบคุณวุฒิ – Checklist</h1>
         <div className="flex items-center gap-2 text-xs md:text-sm">
-          <kbd className="rounded border px-1.5 py-0.5 bg-neutral-50 text-neutral-700">Ctrl/⌘K</kbd>
-          <span className="text-neutral-500">ค้นหา</span>
-          <span className="hidden md:inline text-neutral-300">|</span>
-          <kbd className="hidden md:inline rounded border px-1.5 py-0.5 bg-neutral-50 text-neutral-700">Ctrl/⌘S</kbd>
-          <span className="hidden md:inline text-neutral-500">บันทึก</span>
+          <kbd className="rounded border px-1.5 py-0.5 bg-neutral-50 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">Ctrl/⌘K</kbd>
+          <span className="text-neutral-500 dark:text-neutral-400">ค้นหา</span>
+          <span className="hidden md:inline text-neutral-300 dark:text-neutral-600">|</span>
+          <kbd className="hidden md:inline rounded border px-1.5 py-0.5 bg-neutral-50 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-200">Ctrl/⌘S</kbd>
+          <span className="hidden md:inline text-neutral-500 dark:text-neutral-400">บันทึก</span>
+          <button onClick={toggleTheme} className="ml-2 rounded border px-2 py-1 bg-neutral-50 text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-700 dark:text-neutral-200 dark:border-neutral-600 dark:hover:bg-neutral-600">
+            {theme === 'dark' ? 'Light' : 'Dark'}
+          </button>
         </div>
       </div>
     </header>
